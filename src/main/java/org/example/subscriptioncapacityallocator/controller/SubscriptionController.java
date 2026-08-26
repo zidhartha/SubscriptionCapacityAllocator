@@ -22,6 +22,14 @@ public class SubscriptionController {
     @PostMapping("/optimize")
     public ResponseEntity<OptimizeResponseDto> optimize(@Valid @RequestBody OptimizeRequestDto dto){
         OptimizeResponseDto optimizeResponseDto = subscriptionOptimizationService.optimize(dto);
+
+        if (!dto.getAvailableSubscriptions().isEmpty()
+                && optimizeResponseDto.getAcceptedSubscriptions().isEmpty()
+                && optimizeResponseDto.getTotalFeeRevenue() == 0) {
+
+            return ResponseEntity.ok(optimizeResponseDto);
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(optimizeResponseDto);
     }
 

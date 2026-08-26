@@ -9,7 +9,7 @@ Java,Docker and Maven is needed.
 **1. Clone the repo**
 ```bash
 git clone https://github.com/zidhartha/SubscriptionCapacityAllocator.git
-cd subscription-capacity-allocator
+cd SubscriptionCapacityAllocator
 ```
 
 **2. Start the database**
@@ -50,27 +50,20 @@ There are two tables:
 
 ### Index choices
 
-- **Unique index on `allocation_decision.request_id`** — this is the field `GET /{requestId}` looks up by,it needs to be unique anyway since its a primary key.But since it is indexed, full table scan does not happen and the lookup is much faster because it creates a btree which has a faster lookup.
+- **Unique index on `allocation_decision.request_id`** —`requestId` is used to find a specific decision, so the unique index makes these lookups faster and also prevents duplicate request IDs.
 - **Index on `allocation_decision.created_at` (descending)** — `GET /subscriptions` returns results ordered newest first, the same logic applies to this index, since this column is used for sorting, the index helps to make the process faster.
 - **Index on `accepted_subscriptions.decision_id`** — this is the foreign key back to the parent decision, and this index will help the join to be faster.
 
+>These examples are created for windows.
 ## API examples
 
 ### 1. `POST /api/v1/subscriptions/optimize`
 
 Request:
-```bash
-curl -X POST http://localhost:8080/api/v1/subscriptions/optimize \
-  -H "Content-Type: application/json" \
-  -d '{
-    "maxCapacity": 15,
-    "availableSubscriptions": [
-      { "investorName": "Investor A", "requestedAmount": 5, "feeRevenue": 120 },
-      { "investorName": "Investor B", "requestedAmount": 10, "feeRevenue": 200 },
-      { "investorName": "Investor C", "requestedAmount": 3, "feeRevenue": 80 },
-      { "investorName": "Investor D", "requestedAmount": 8, "feeRevenue": 160 }
-    ]
-  }'
+```powershell
+curl.exe -X POST "http://localhost:8080/api/v1/subscriptions/optimize" `
+  -H "Content-Type: application/json" `
+  -d "{`"maxCapacity`":15,`"availableSubscriptions`":[{`"investorName`":`"Investor A`",`"requestedAmount`":5,`"feeRevenue`":120},{`"investorName`":`"Investor B`",`"requestedAmount`":10,`"feeRevenue`":200},{`"investorName`":`"Investor C`",`"requestedAmount`":3,`"feeRevenue`":80},{`"investorName`":`"Investor D`",`"requestedAmount`":8,`"feeRevenue`":160}]}"
 ```
 
 Response (`201 Created`):
@@ -83,7 +76,7 @@ Response (`201 Created`):
   ],
   "totalRequestedAmount": 15,
   "totalFeeRevenue": 320,
-  "createdAt": "2026-08-26T16:30:23.049054"
+  "createdAt": "some time"
 }
 ```
 
@@ -92,8 +85,8 @@ A + B was chosen over C + D or any other combo because it gives the highest tota
 ### 2. `GET /api/v1/subscriptions/{requestId}`
 
 Request (using the `requestId` from above):
-```bash
-curl http://localhost:8080/api/v1/subscriptions/f3055762-0e01-4e9a-b57a-bc8c2590b8a2
+```powershell
+curl.exe "http://localhost:8080/api/v1/subscriptions/f3055762-0e01-4e9a-b57a-bc8c2590b8a2"
 ```
 
 Response (`200 OK`):
@@ -106,7 +99,7 @@ Response (`200 OK`):
   ],
   "totalRequestedAmount": 15,
   "totalFeeRevenue": 320,
-  "createdAt": "2026-08-26T16:30:23.049054"
+  "createdAt": "some time"
 }
 ```
 
@@ -115,8 +108,8 @@ If you use a `requestId` that doesn't exist, you get a `404 Not Found` instead.
 ### 3. `GET /api/v1/subscriptions`
 
 Request:
-```bash
-curl http://localhost:8080/api/v1/subscriptions
+```powershell
+curl.exe "http://localhost:8080/api/v1/subscriptions"
 ```
 
 Response (`200 OK`), paginated list of every decision made so far, most recent first:
@@ -131,7 +124,7 @@ Response (`200 OK`), paginated list of every decision made so far, most recent f
       ],
       "totalRequestedAmount": 15,
       "totalFeeRevenue": 320,
-      "createdAt": "2026-08-26T16:30:23.049054"
+      "createdAt": "some time"
     }
   ],
   "totalElements": 1,
@@ -144,14 +137,38 @@ Response (`200 OK`), paginated list of every decision made so far, most recent f
 ### Error case example
 
 If you send invalid input (like a negative capacity), you get a `400 Bad Request` with a message explaining what's wrong:
-```bash
-curl -X POST http://localhost:8080/api/v1/subscriptions/optimize \
-  -H "Content-Type: application/json" \
-  -d '{ "maxCapacity": -5, "availableSubscriptions": [] }'
+```powershell
+curl.exe -X POST "http://localhost:8080/api/v1/subscriptions/optimize" `
+  -H "Content-Type: application/json" `
+  -d "{`"maxCapacity`":-5,`"availableSubscriptions`":[]}"
 ```
 ```json
 { "error": "Maximum capacity must be non negative" }
 ```
+
+### No valid combination
+
+If no available subscription can fit within the specified capacity, the API returns an empty allocation with `totalFeeRevenue` of `0` and HTTP `200 OK`.
+
+**Request:**
+
+```powershell
+curl.exe -X POST "http://localhost:8080/api/v1/subscriptions/optimize" `
+  -H "Content-Type: application/json" `
+  -d "{`"maxCapacity`":1,`"availableSubscriptions`":[{`"investorName`":`"Investor A`",`"requestedAmount`":50,`"feeRevenue`":100}]}"
+
+```
+Response (200 OK):
+```json
+{
+"requestId": "random_uuid",
+"acceptedSubscriptions": [],
+"totalRequestedAmount": 0,
+"totalFeeRevenue": 0,
+"createdAt": "some time"
+}
+```
+
 
 ## A note on the algorithm
 

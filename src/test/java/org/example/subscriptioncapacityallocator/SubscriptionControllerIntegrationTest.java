@@ -65,8 +65,8 @@ class SubscriptionControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /optimize - Returns 201 Created with empty list when no item fits capacity")
-    void optimize_withNoValidCombination_returnsEmptyResultWith201() throws Exception {
+    @DisplayName("POST /optimize - Returns 200 ok with empty list when no item fits capacity")
+    void optimize_withNoValidCombination_returnsEmptyResultWith200() throws Exception {
         String body = """
             {
               "maxCapacity": 1,
@@ -79,7 +79,7 @@ class SubscriptionControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/subscriptions/optimize")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.acceptedSubscriptions.length()").value(0))
                 .andExpect(jsonPath("$.totalFeeRevenue").value(0));
     }
