@@ -54,16 +54,23 @@ There are two tables:
 - **Index on `allocation_decision.created_at` (descending)** — `GET /subscriptions` returns results ordered newest first, the same logic applies to this index, since this column is used for sorting, the index helps to make the process faster.
 - **Index on `accepted_subscriptions.decision_id`** — this is the foreign key back to the parent decision, and this index will help the join to be faster.
 
->These examples are created for windows.
 ## API examples
 
 ### 1. `POST /api/v1/subscriptions/optimize`
 
 Request:
-```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/subscriptions/optimize" `
-  -H "Content-Type: application/json" `
-  -d "{`"maxCapacity`":15,`"availableSubscriptions`":[{`"investorName`":`"Investor A`",`"requestedAmount`":5,`"feeRevenue`":120},{`"investorName`":`"Investor B`",`"requestedAmount`":10,`"feeRevenue`":200},{`"investorName`":`"Investor C`",`"requestedAmount`":3,`"feeRevenue`":80},{`"investorName`":`"Investor D`",`"requestedAmount`":8,`"feeRevenue`":160}]}"
+```bash
+curl -X POST http://localhost:8080/api/v1/subscriptions/optimize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "maxCapacity": 15,
+    "availableSubscriptions": [
+      { "investorName": "Investor A", "requestedAmount": 5, "feeRevenue": 120 },
+      { "investorName": "Investor B", "requestedAmount": 10, "feeRevenue": 200 },
+      { "investorName": "Investor C", "requestedAmount": 3, "feeRevenue": 80 },
+      { "investorName": "Investor D", "requestedAmount": 8, "feeRevenue": 160 }
+    ]
+  }'
 ```
 
 Response (`201 Created`):
@@ -85,8 +92,8 @@ A + B was chosen over C + D or any other combo because it gives the highest tota
 ### 2. `GET /api/v1/subscriptions/{requestId}`
 
 Request (using the `requestId` from above):
-```powershell
-curl.exe "http://localhost:8080/api/v1/subscriptions/f3055762-0e01-4e9a-b57a-bc8c2590b8a2"
+```bash
+curl http://localhost:8080/api/v1/subscriptions/f3055762-0e01-4e9a-b57a-bc8c2590b8a2
 ```
 
 Response (`200 OK`):
@@ -108,8 +115,8 @@ If you use a `requestId` that doesn't exist, you get a `404 Not Found` instead.
 ### 3. `GET /api/v1/subscriptions`
 
 Request:
-```powershell
-curl.exe "http://localhost:8080/api/v1/subscriptions"
+```bash
+curl http://localhost:8080/api/v1/subscriptions
 ```
 
 Response (`200 OK`), paginated list of every decision made so far, most recent first:
@@ -137,10 +144,10 @@ Response (`200 OK`), paginated list of every decision made so far, most recent f
 ### Error case example
 
 If you send invalid input (like a negative capacity), you get a `400 Bad Request` with a message explaining what's wrong:
-```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/subscriptions/optimize" `
-  -H "Content-Type: application/json" `
-  -d "{`"maxCapacity`":-5,`"availableSubscriptions`":[]}"
+```bash
+curl -X POST http://localhost:8080/api/v1/subscriptions/optimize \
+  -H "Content-Type: application/json" \
+  -d '{ "maxCapacity": -5, "availableSubscriptions": [] }'
 ```
 ```json
 { "error": "Maximum capacity must be non negative" }
@@ -152,10 +159,19 @@ If no available subscription can fit within the specified capacity, the API retu
 
 **Request:**
 
-```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/subscriptions/optimize" `
-  -H "Content-Type: application/json" `
-  -d "{`"maxCapacity`":1,`"availableSubscriptions`":[{`"investorName`":`"Investor A`",`"requestedAmount`":50,`"feeRevenue`":100}]}"
+```bash
+curl -X POST http://localhost:8080/api/v1/subscriptions/optimize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "maxCapacity": 1,
+    "availableSubscriptions": [
+      {
+        "investorName": "Investor A",
+        "requestedAmount": 50,
+        "feeRevenue": 100
+      }
+    ]
+  }'
 
 ```
 Response (200 OK):
