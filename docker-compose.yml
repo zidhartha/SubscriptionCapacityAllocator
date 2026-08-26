@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: subscription-allocator-db
+    environment:
+      POSTGRES_DB: subscription_allocator
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - subscription_allocator_data:/var/lib/postgresql/data
+
+volumes:
+  subscription_allocator_data:
