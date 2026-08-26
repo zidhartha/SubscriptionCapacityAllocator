@@ -9,6 +9,9 @@ CREATE TABLE allocation_decision(
 
 CREATE UNIQUE INDEX idx_allocation_decision_request_id on allocation_decision(request_id);
 
+CREATE INDEX idx_allocation_decision_created_at
+    ON allocation_decision (created_at DESC);
+
 CREATE TABLE accepted_subscriptions(
     id BIGSERIAL PRIMARY KEY,
     investor_name VARCHAR(255) NOT NULL,
